@@ -1,0 +1,26 @@
+[90m= [39m[34;4mApp\Models\User[39;24m {#8169
+    [34mid[39m: [35m1[39m,
+    [34mname[39m: [32m"[39m[32mLibrarian Admin[39m[32m"[39m,
+    [34memail[39m: [32m"[39m[32mlibrarian@urms.ac.tz[39m[32m"[39m,
+    [34memail_verified_at[39m: [32m"[39m[32m2026-08-25 07:09:46[39m[32m"[39m,
+    #[33mpassword[39m: [32m"[39m\$[32m2y[39m\$[32m12[39m\$[32mfTaPGeQ8LKlpTBaxwfWLNuuXYBPlRmde.kMxQp.17eUrgnOGOUr46[39m[32m"[39m,
+    [34mrole[39m: [32m"[39m[32mlibrarian[39m[32m"[39m,
+    [34mdepartment[39m: [36mnull[39m,
+    [34mreg_number[39m: [36mnull[39m,
+    #[33mremember_token[39m: [36mnull[39m,
+    [34mcreated_at[39m: [32m"[39m[32m2026-08-25 07:09:46[39m[32m"[39m,
+    [34mupdated_at[39m: [32m"[39m[32m2026-08-25 07:09:46[39m[32m"[39m,
+  }
+[90m= [39m[34;4mApp\Models\User[39;24m {#8191
+    [34mid[39m: [35m17[39m,
+    [34mname[39m: [32m"[39m[32madmin[39m[32m"[39m,
+    [34memail[39m: [32m"[39m[32mmhangajonas8@gmail.com[39m[32m"[39m,
+    [34memail_verified_at[39m: [36mnull[39m,
+    #[33mpassword[39m: [32m"[39m\$[32m2y[39m\$[32m12[39m\$[32msCQjfINTUHmqXyzRQETIJ.qcvCiFg7EVcvAkZqVmmNLJjv3kqMc72[39m[32m"[39m,
+    [34mrole[39m: [32m"[39m[32mstudent[39m[32m"[39m,
+    [34mdepartment[39m: [36mnull[39m,
+    [34mreg_number[39m: [36mnull[39m,
+    #[33mremember_token[39m: [36mnull[39m,
+    [34mcreated_at[39m: [32m"[39m[32m2026-08-27 06:33:27[39m[32m"[39m,
+    [34mupdated_at[39m: [32m"[39m[32m2026-08-27 06:33:27[39m[32m"[39m,
+  }

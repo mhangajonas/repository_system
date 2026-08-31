@@ -17,14 +17,17 @@
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                             {{ __('Admin Dashboard') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                            {{ __('Institutional Repository') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                             {{ __('Manage Users') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')">
-                            {{ __('System Settings') }}
-                        </x-nav-link>
                         <x-nav-link :href="route('admin.backups')" :active="request()->routeIs('admin.backups')">
                             {{ __('Manage Backups') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('download.logs')" :active="request()->routeIs('download.logs')">
+                            {{ __('Download Logs') }}
                         </x-nav-link>
                         <x-nav-link :href="route('library.reports')" :active="request()->routeIs('library.reports')">
                             {{ __('System Analytics') }}
@@ -35,8 +38,14 @@
                         <x-nav-link :href="route('library.index')" :active="request()->routeIs('library.index')">
                             {{ __('Library Review') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                            {{ __('Institutional Repository') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('library.catalogues')" :active="request()->routeIs('library.catalogues')">
                             {{ __('Manage Catalogues') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('download.logs')" :active="request()->routeIs('download.logs')">
+                            {{ __('Download Logs') }}
                         </x-nav-link>
                         <x-nav-link :href="route('library.reports')" :active="request()->routeIs('library.reports')">
                             {{ __('Reports & Analytics') }}
@@ -47,6 +56,9 @@
                         <x-nav-link :href="route('supervisor.index')" :active="request()->routeIs('supervisor.index')">
                             {{ __('Supervisor Review') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                            {{ __('Institutional Repository') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('supervisor.history')" :active="request()->routeIs('supervisor.history')">
                             {{ __('History') }}
                         </x-nav-link>
@@ -55,6 +67,9 @@
                         <!-- MENU YA STUDENT -->
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('Dashboard') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                            {{ __('Institutional Repository') }}
                         </x-nav-link>
                         <x-nav-link :href="route('repositories.create')" :active="request()->routeIs('repositories.create')">
                             {{ __('Upload Document') }}
@@ -120,6 +135,9 @@
                 <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                     {{ __('Admin Dashboard') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                    {{ __('Institutional Repository') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                     {{ __('Manage Users') }}
                 </x-responsive-nav-link>
@@ -128,6 +146,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.backups')" :active="request()->routeIs('admin.backups')">
                     {{ __('Manage Backups') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('download.logs')" :active="request()->routeIs('download.logs')">
+                    {{ __('📥 Download Logs') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('library.reports')" :active="request()->routeIs('library.reports')">
                     {{ __('System Analytics') }}
@@ -138,8 +159,14 @@
                 <x-responsive-nav-link :href="route('library.index')" :active="request()->routeIs('library.index')">
                     {{ __('Library Review') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                    {{ __('Institutional Repository') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('library.catalogues')" :active="request()->routeIs('library.catalogues')">
                     {{ __('Manage Catalogues') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('download.logs')" :active="request()->routeIs('download.logs')">
+                    {{ __('📥 Download Logs') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('library.reports')" :active="request()->routeIs('library.reports')">
                     {{ __('Reports & Analytics') }}
@@ -150,6 +177,9 @@
                 <x-responsive-nav-link :href="route('supervisor.index')" :active="request()->routeIs('supervisor.index')">
                     {{ __('Supervisor Review') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                    {{ __('Institutional Repository') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('supervisor.history')" :active="request()->routeIs('supervisor.history')">
                     {{ __('History') }}
                 </x-responsive-nav-link>
@@ -158,6 +188,9 @@
                 <!-- MENU YA STUDENT (MOBILE) -->
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     {{ __('Dashboard') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('repositories.published')" :active="request()->routeIs('repositories.published')">
+                    {{ __('Institutional Repository') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('repositories.create')" :active="request()->routeIs('repositories.create')">
                     {{ __('Upload Document') }}

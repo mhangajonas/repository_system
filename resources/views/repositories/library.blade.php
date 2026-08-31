@@ -40,7 +40,7 @@
                                             <span class="text-xs text-gray-500">Dept: {{ $doc->department }}</span>
                                         </td>
                                         <td class="px-6 py-4 text-sm">
-                                            <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="text-blue-600 hover:underline">📄 View PDF</a>
+                                            <a href="{{ route('repositories.download', $doc->id) }}" class="text-blue-600 hover:underline">📄 View PDF</a>
                                         </td>
                                         <td class="px-6 py-4 text-center">
                                             <form action="{{ route('library.action', $doc->id) }}" method="POST" class="space-y-2">

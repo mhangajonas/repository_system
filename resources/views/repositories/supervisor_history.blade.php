@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('System Backups & Activity Logs') }}
+            {{ __('Kumbukumbu ya Kazi Zilizohakikiwa (Supervisor History)') }}
         </h2>
     </x-slot>
 
@@ -21,87 +21,110 @@
                     </div>
                 @endif
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mtumiaji</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kitendo (Action)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Maelezo</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarehe</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vitendo (Actions)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
-                            @forelse($backups as $log)
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-700">Kazi Zote Zilizopitia Kwako</h3>
+                    <a href="{{ route('supervisor.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold shadow">
+                        ← Rudi Kwenye Uhakiki (Review Dashboard)
+                    </a>
+                </div>
+
+                @if($reviewedDocuments->isEmpty())
+                    <p class="text-gray-500 text-center py-6">Hakuna kumbukumbu ya kazi zilizohakikiwa kwa sasa.</p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <td class="px-6 py-4 font-semibold text-gray-900">
-                                        {{ $log->user->name ?? 'System / Mgeni' }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 font-bold">
-                                            {{ $log->action }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-600">{{ $log->description }}</td>
-                                    <td class="px-6 py-4 text-xs text-gray-500">{{ $log->created_at->format('d M Y, H:i') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @php
-                                            // Chomoa ID ya document kutoka kwenye maelezo ya logi
-                                            preg_match('/\(ID: (\d+)\)/', $log->description, $matches);
-                                            $docId = $matches[1] ?? null;
-                                        @endphp
-
-                                        <div class="flex items-center space-x-2">
-                                            {{-- 1. Kitufe cha Kurudisha (Restore) - Admin pekee --}}
-                                            @if($log->action === 'DELETE_DOCUMENT' && auth()->user()->role === 'admin')
-                                                <form action="{{ route('admin.backups.restore', $log->id) }}" method="POST" onsubmit="return confirm('Una uhakika unataka kurudisha kazi hii kwenye mfumo?');">
-                                                    @csrf
-                                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold shadow">
-                                                        🔄 Rudisha
-                                                    </button>
-                                                </form>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mwanafunzi</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kichwa cha Kazi</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Idara / Mwaka</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hali (Status)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Maoni</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarehe</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Vitendo</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                                @foreach($reviewedDocuments as $doc)
+                                    <tr class="{{ $doc->trashed() ? 'bg-red-50/50' : '' }}">
+                                        <td class="px-6 py-4 font-semibold text-gray-900">
+                                            {{ $doc->user->name ?? 'Mwanafunzi' }}<br>
+                                            <span class="text-xs text-gray-400">{{ $doc->user->reg_number ?? ($doc->user->email ?? '') }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 font-medium text-gray-800">
+                                            {{ $doc->title }}
+                                            <div class="text-xs text-gray-500">{{ $doc->document_type }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-600">
+                                            {{ $doc->department }} ({{ $doc->year }})
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($doc->trashed())
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-red-100 text-red-800 font-bold">
+                                                    🗑️ Imefutwa (Kwenye Backups)
+                                                </span>
+                                            @elseif($doc->status == 'approved')
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-green-100 text-green-800 font-bold">
+                                                    ✅ Approved
+                                                </span>
+                                            @elseif($doc->status == 'pending_library')
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-bold">
+                                                    📚 Pending Library
+                                                </span>
+                                            @elseif($doc->status == 'revision_requested')
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-orange-100 text-orange-800 font-bold">
+                                                    🔄 Inahitaji Marekebisho
+                                                </span>
+                                            @elseif($doc->status == 'rejected')
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-red-100 text-red-800 font-bold">
+                                                    ❌ Rejected
+                                                </span>
+                                            @else
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 font-bold">
+                                                    ⏳ Pending Review
+                                                </span>
                                             @endif
-
-                                            {{-- 2. Kitufe cha Kudownload Kazi Iliyofutwa (Functional) --}}
-                                            @if($log->action === 'DELETE_DOCUMENT' && $docId)
-                                                <a href="{{ route('repositories.download', $docId) }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold shadow">
-                                                    ⬇️ Pakua
-                                                </a>
-                                            @endif
-
-                                            {{-- 3. Kitufe cha Onyesha Metadata --}}
-                                            @if($log->action === 'DELETE_DOCUMENT' && $docId)
-                                                <a href="{{ route('repositories.show', $docId) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-semibold shadow">
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-600 max-w-xs text-xs">
+                                            {{ $doc->comments ?? 'Bila maoni' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
+                                            {{ $doc->updated_at->format('d M Y, H:i') }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <!-- Onyesha -->
+                                                <a href="{{ route('repositories.show', $doc->id) }}" class="text-indigo-600 hover:text-indigo-900 font-semibold bg-indigo-50 px-2.5 py-1 rounded text-xs border border-indigo-200 shadow-sm">
                                                     👁️ Onyesha
                                                 </a>
-                                            @endif
 
-                                            {{-- 4. Kitufe cha Futa Kabisa (Force Delete) - Kinatambua Admin au Supervisor --}}
-                                            <form action="{{ auth()->user()->role === 'admin' ? route('admin.backups.destroy', $log->id) : route('supervisor.backups.destroy', $log->id) }}" method="POST" onsubmit="return confirm('Una uhakika unataka kufuta kabisa kumbukumbu hii na faili lake?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold shadow">
-                                                    🗑️ Futa
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                        Hakuna kumbukumbu za backups kwa sasa.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                                                <!-- Pakua -->
+                                                <a href="{{ route('repositories.download', $doc->id) }}" class="text-green-700 hover:text-green-900 font-semibold bg-green-50 px-2.5 py-1 rounded text-xs border border-green-200 shadow-sm">
+                                                    ⬇️ Pakua
+                                                </a>
 
-                <div class="mt-4">
-                    {{ $backups->links() }}
-                </div>
+                                                <!-- Futa (Inafanya Soft Delete na Kuiweka kwenye Backups za Admin) -->
+                                                @if(!$doc->trashed())
+                                                    <form action="{{ route('repositories.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Una uhakika unataka kufuta kazi hii na kuiweka kwenye backups za mfumo?');" class="inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-900 font-semibold bg-red-50 px-2.5 py-1 rounded text-xs border border-red-200 shadow-sm">
+                                                            🗑️ Futa
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4">
+                        {{ $reviewedDocuments->links() }}
+                    </div>
+                @endif
 
             </div>
         </div>

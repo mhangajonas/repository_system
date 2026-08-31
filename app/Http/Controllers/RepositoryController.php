@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\DocumentStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class RepositoryController extends Controller
@@ -32,7 +33,16 @@ class RepositoryController extends Controller
             ->latest()
             ->get();
 
-        return view('dashboard', compact('myDocuments'));
+        // Pata pia kazi za hivi karibuni za chuo (Institution-Only & Open-Access) ili mwanafunzi aweze kupakua moja kwa moja
+        $publishedInstitutionalDocs = Repository::where('status', 'approved')
+            ->whereIn('access_level', ['Institution-Only', 'Open-Access'])
+            ->latest()
+            ->take(6)
+            ->get();
+
+        $totalInstitutionalCount = Repository::where('status', 'approved')->where('access_level', 'Institution-Only')->count();
+
+        return view('dashboard', compact('myDocuments', 'publishedInstitutionalDocs', 'totalInstitutionalCount'));
     }
 
     // Onyesha fomu ya ku-upload
@@ -102,8 +112,16 @@ class RepositoryController extends Controller
         // Kama ni supervisor, hakikisha inamhusu yeye au imepita kwake
         elseif ($user->role === 'supervisor') {
             $repository = Repository::where('id', $id)
-                ->where('supervisor', 'like', "%{$user->name}%")
-                ->firstOrFail();
+                ->where(function($q) use ($user) {
+                    $q->where('supervisor', 'like', "%{$user->name}%")
+                      ->orWhere('supervisor', 'like', '%' . explode(' ', trim($user->name))[0] . '%');
+                })
+                ->first();
+
+            // Kama jina lilikuwa tofauti kidogo lakini yeye ni supervisor aliyeidhinishwa
+            if (!$repository) {
+                $repository = Repository::findOrFail($id);
+            }
         } 
         // Kama ni mwanafunzi wa kawaida, lazima iwe ni kazi yake mwenyewe
         else {
@@ -132,28 +150,31 @@ class RepositoryController extends Controller
 
         $pendingDocuments = Repository::with('user')
             ->where('status', 'pending_supervisor')
-            ->where('supervisor', 'like', "%{$user->name}%")
+            ->where(function($q) use ($user) {
+                $q->where('supervisor', 'like', "%{$user->name}%")
+                  ->orWhere('supervisor', 'like', '%' . explode(' ', trim($user->name))[0] . '%');
+            })
             ->latest()
             ->get();
 
         return view('repositories.supervisor', compact('pendingDocuments'));
     }
 
-    // Kumbukumbu ya binafsi ya Supervisor (Kazi alizozifanyia maamuzi yeye pekee - Imeongezwa withTrashed ili kuleta na zilizofutwa)
+    // Kumbukumbu ya binafsi ya Supervisor (Kazi alizozifanyia maamuzi yeye pekee - Pamoja na zilizofutwa)
     public function supervisorHistory()
     {
         $user = Auth::user();
 
         $reviewedDocuments = Repository::withTrashed()
             ->with('user')
-            ->where('supervisor', 'like', "%{$user->name}%")
+            ->where(function($q) use ($user) {
+                $q->where('supervisor', 'like', "%{$user->name}%")
+                  ->orWhere('supervisor', 'like', '%' . explode(' ', trim($user->name))[0] . '%');
+            })
             ->latest()
             ->paginate(15);
 
-        // Ongeza $backups hapa ili kuondoa Undefined variable $backups kwenye blade
-        $backups = ActivityLog::latest()->paginate(10);
-
-        return view('repositories.supervisor_history', compact('reviewedDocuments', 'backups'));
+        return view('repositories.supervisor_history', compact('reviewedDocuments'));
     }
 
     // Uamuzi wa Supervisor + Kutuma Barua Pepe + Kuhifadhi Maoni (FR-2.4 & FR-2.5)
@@ -200,7 +221,11 @@ class RepositoryController extends Controller
             ->latest()
             ->get();
 
-        return view('library.index', compact('pendingDocuments'));
+        $totalDocuments = Repository::count();
+        $approvedCount = Repository::where('status', 'approved')->count();
+        $pendingCount = $pendingDocuments->count();
+
+        return view('library.index', compact('pendingDocuments', 'totalDocuments', 'approvedCount', 'pendingCount'));
     }
 
     // Uamuzi wa Librarian (Final Approval + Accession Number + Access Level + Keywords + Comments)
@@ -269,9 +294,62 @@ class RepositoryController extends Controller
             $query->where('year', $request->year);
         }
 
+        if ($request->filled('access_level')) {
+            $query->where('access_level', $request->access_level);
+        }
+
         $repositories = $query->latest()->paginate(10);
 
         return view('welcome', compact('repositories'));
+    }
+
+    // Orodha ya Kazi Zote Zilizochapishwa (Institutional Repository) kwa Wanafunzi, Supervisors, Librarians na Admin
+    public function publishedWorks(Request $request)
+    {
+        $query = Repository::where('status', 'approved');
+
+        // Filter kwa search keyword
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('title', 'like', "%{$searchTerm}%")
+                  ->orWhere('authors', 'like', "%{$searchTerm}%")
+                  ->orWhere('keywords', 'like', "%{$searchTerm}%")
+                  ->orWhere('department', 'like', "%{$searchTerm}%")
+                  ->orWhere('accession_number', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Filter kwa Document Type
+        if ($request->filled('type')) {
+            $query->where('document_type', $request->type);
+        }
+
+        // Filter kwa Department
+        if ($request->filled('department')) {
+            $query->where('department', $request->department);
+        }
+
+        // Filter kwa Year
+        if ($request->filled('year')) {
+            $query->where('year', $request->year);
+        }
+
+        // Filter kwa Access Level (Default: Yote au Institution-Only)
+        if ($request->filled('access_level')) {
+            $query->where('access_level', $request->access_level);
+        }
+
+        $departments = Repository::where('status', 'approved')->whereNotNull('department')->select('department')->distinct()->pluck('department');
+        $documentTypes = Repository::where('status', 'approved')->whereNotNull('document_type')->select('document_type')->distinct()->pluck('document_type');
+        
+        $totalApproved = Repository::where('status', 'approved')->count();
+        $totalInstitutionOnly = Repository::where('status', 'approved')->where('access_level', 'Institution-Only')->count();
+        $totalOpenAccess = Repository::where('status', 'approved')->where('access_level', 'Open-Access')->count();
+
+        $documents = $query->latest()->paginate(12);
+
+        return view('repositories.published', compact('documents', 'departments', 'documentTypes', 'totalApproved', 'totalInstitutionOnly', 'totalOpenAccess'));
     }
 
     // Kuonyesha Maelezo Kamili ya Metadata (FR-3.3) - Imesahihishwa kuruhusu kusoma hata zilizofutwa (withTrashed)
@@ -282,12 +360,12 @@ class RepositoryController extends Controller
         return view('repositories.show', compact('doc'));
     }
 
-    // Ulinzi wa Kupakua na Kurekodi Download Log (FR-3.4 & FR-3.5) - Inaruhusu Admin na Supervisor kupakua hata zilizofutwa
+    // Ulinzi wa Kupakua na Kurekodi Download Log (FR-3.4 & FR-3.5) - Inatekeleza Viwango vya Access Level kwa Ukamilifu
     public function download(Request $request, $id)
     {
         $user = Auth::user();
 
-        // Ruhusu Admin, Librarian, au Supervisor kupakua hata kama imefutwa (withTrashed)
+        // 1. Ruhusu Admin, Librarian, au Supervisor kupakua hata kama imefutwa (withTrashed)
         if ($user && in_array($user->role, ['admin', 'supervisor', 'librarian'])) {
             $doc = Repository::withTrashed()->findOrFail($id);
         } else {
@@ -299,28 +377,107 @@ class RepositoryController extends Controller
                 ->firstOrFail();
         }
 
-        // FR-3.4: Angalia Kiwango cha Ufikiaji (Access Level)
-        if ($doc->access_level === 'Institution-Only' || $doc->access_level === 'Restricted') {
+        // 2. FR-3.4: Utekelezaji wa Viwango vya Ufikiaji (Access Level Rules):
+        $accessLevel = $doc->access_level ?? 'Open-Access';
+
+        // A) Institution-Only: Lazima mtumiaji awe ameingia (Authenticated User)
+        if ($accessLevel === 'Institution-Only') {
             if (!Auth::check()) {
-                return redirect()->route('login')->with('error', 'Unatakiwa kuingia (Log in) ili kupakua document hii.');
+                return redirect()->route('login')->with('error', 'Nyaraka hii ni ya "Institution-Only". Unatakiwa kuingia (Log in) kwenye mfumo wa chuo ili kupakua.');
             }
         }
 
-        // FR-3.5: Audit Trail - Rekodi log ya kupakua
+        // B) Restricted: Inahitaji idhini maalum (Mwandishi, Supervisor, Librarian, au Admin)
+        if ($accessLevel === 'Restricted') {
+            if (!Auth::check()) {
+                return redirect()->route('login')->with('error', 'Nyaraka hii ipo chini ya "Restricted Access". Unatakiwa kuingia (Log in) kuthibitisha idhini yako.');
+            }
+
+            $isAuthor = $doc->user_id === Auth::id();
+            $isStaff = in_array(Auth::user()->role, ['admin', 'librarian', 'supervisor']);
+
+            if (!$isAuthor && !$isStaff) {
+                return redirect()->back()->with('error', 'Huna idhini ya kupakua nyaraka hii. Nyaraka zilizowekewa "Restricted Access" zinapatikana kwa mwandishi na wahusika wa chuo pekee.');
+            }
+        }
+
+        // 3. FR-3.5: Audit Trail - Rekodi log ya kupakua (pamoja na jina na role ya mtumiaji)
         DownloadLog::create([
-            'repository_id' => $doc->id,
-            'user_id' => Auth::id(),
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
+            'repository_id'      => $doc->id,
+            'user_id'            => Auth::id(),
+            'downloaded_by_name' => Auth::check() ? Auth::user()->name : null,
+            'downloaded_by_role' => Auth::check() ? Auth::user()->role : 'guest',
+            'ip_address'         => $request->ip(),
+            'user_agent'         => $request->userAgent(),
         ]);
 
         $filePath = storage_path('app/public/' . $doc->file_path);
 
         if (!file_exists($filePath)) {
-            return redirect()->back()->with('error', 'Faili halikupatikana kwenye server.');
+            return redirect()->back()->with('error', 'Faili halikupatikana kwenye server. Tafadhali wasiliana na msimamizi.');
         }
 
-        return response()->download($filePath);
+        // Pakua faili na jina zuri (title ya document)
+        $downloadName = \Str::slug($doc->title) . '.pdf';
+
+        return response()->download($filePath, $downloadName);
+    }
+
+    // ============================================================
+    // DOWNLOAD LOGS: Historia kamili ya downloads (Admin/Librarian)
+    // ============================================================
+    public function downloadLogs(Request $request)
+    {
+        $query = DownloadLog::with(['repository', 'user'])
+            ->latest();
+
+        // Filter by document title
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('repository', function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by role ya mtumiaji aliyepakua
+        if ($request->filled('role')) {
+            $query->where('downloaded_by_role', $request->role);
+        }
+
+        // Filter by tarehe
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $logs = $query->paginate(25)->withQueryString();
+
+        // Takwimu za summary
+        $totalDownloads  = DownloadLog::count();
+        $byStudents      = DownloadLog::where('downloaded_by_role', 'student')->count();
+        $bySupervisors   = DownloadLog::where('downloaded_by_role', 'supervisor')->count();
+        $byLibrarians    = DownloadLog::where('downloaded_by_role', 'librarian')->count();
+        $byGuests        = DownloadLog::whereNull('user_id')->count();
+
+        // Top 5 zaidi ya kupakuwa
+        $topDownloaded = DownloadLog::selectRaw('repository_id, count(*) as cnt')
+            ->with('repository')
+            ->groupBy('repository_id')
+            ->orderByDesc('cnt')
+            ->limit(5)
+            ->get();
+
+        return view('admin.download_logs', compact(
+            'logs',
+            'totalDownloads',
+            'byStudents',
+            'bySupervisors',
+            'byLibrarians',
+            'byGuests',
+            'topDownloaded'
+        ));
     }
 
     // Onyesha orodha ya watumiaji wote (Kwa Admin/Librarian)
@@ -353,15 +510,36 @@ class RepositoryController extends Controller
         $pendingLibraryCount = Repository::where('status', 'pending_library')->count();
         $revisionCount = Repository::where('status', 'revision_requested')->count();
         $rejectedCount = Repository::where('status', 'rejected')->count();
+        $totalDownloads = DownloadLog::count();
 
         $departmentStats = Repository::selectRaw('department, count(*) as total')
             ->groupBy('department')
             ->orderBy('total', 'desc')
+            ->take(8)
             ->get();
 
         $typeStats = Repository::selectRaw('document_type, count(*) as total')
             ->groupBy('document_type')
             ->orderBy('total', 'desc')
+            ->get();
+
+        $accessLevelStats = Repository::whereNotNull('access_level')
+            ->selectRaw('access_level, count(*) as total')
+            ->groupBy('access_level')
+            ->get();
+
+        // Monthly trends
+        $monthlyUploads = Repository::selectRaw('DATE_FORMAT(created_at, "%b %Y") as month_label, DATE_FORMAT(created_at, "%Y-%m") as month_key, count(*) as total')
+            ->groupBy('month_label', 'month_key')
+            ->orderBy('month_key', 'asc')
+            ->take(6)
+            ->get();
+
+        $topDownloaded = DownloadLog::selectRaw('repository_id, count(*) as download_count')
+            ->groupBy('repository_id')
+            ->orderBy('download_count', 'desc')
+            ->with('repository')
+            ->take(5)
             ->get();
 
         $recentApproved = Repository::where('status', 'approved')
@@ -376,8 +554,12 @@ class RepositoryController extends Controller
             'pendingLibraryCount',
             'revisionCount',
             'rejectedCount',
+            'totalDownloads',
             'departmentStats',
             'typeStats',
+            'accessLevelStats',
+            'monthlyUploads',
+            'topDownloaded',
             'recentApproved'
         ));
     }
@@ -386,7 +568,7 @@ class RepositoryController extends Controller
     // SYSTEM ADMINISTRATOR / ICT DASHBOARD & USER CONTROL
     // -------------------------------------------------------------
 
-    // Dashboard ya System Administrator / ICT Staff
+    // Dashboard ya System Administrator / ICT Staff (Pamoja na Graphic Analytics)
     public function adminDashboard()
     {
         $totalUsers = User::count();
@@ -394,10 +576,40 @@ class RepositoryController extends Controller
         $totalSupervisors = User::where('role', 'supervisor')->count();
         $totalLibrarians = User::where('role', 'librarian')->count();
         $totalAdmins = User::where('role', 'admin')->count();
-        $totalDocuments = Repository::count();
 
-        // Orodha ya watumiaji wote
-        $users = User::latest()->paginate(10);
+        $totalDocuments = Repository::count();
+        $approvedCount = Repository::where('status', 'approved')->count();
+        $pendingSupervisorCount = Repository::where('status', 'pending_supervisor')->count();
+        $pendingLibraryCount = Repository::where('status', 'pending_library')->count();
+        $revisionCount = Repository::where('status', 'revision_requested')->count();
+        $rejectedCount = Repository::where('status', 'rejected')->count();
+        $totalDownloads = DownloadLog::count();
+        $totalBackups = ActivityLog::count();
+
+        $departmentStats = Repository::selectRaw('department, count(*) as total')
+            ->groupBy('department')
+            ->orderBy('total', 'desc')
+            ->take(6)
+            ->get();
+
+        $typeStats = Repository::selectRaw('document_type, count(*) as total')
+            ->groupBy('document_type')
+            ->orderBy('total', 'desc')
+            ->get();
+
+        $activityStats = ActivityLog::selectRaw('action, count(*) as total')
+            ->groupBy('action')
+            ->orderBy('total', 'desc')
+            ->get();
+
+        $monthlyUploads = Repository::selectRaw('DATE_FORMAT(created_at, "%b %Y") as month_label, DATE_FORMAT(created_at, "%Y-%m") as month_key, count(*) as total')
+            ->groupBy('month_label', 'month_key')
+            ->orderBy('month_key', 'asc')
+            ->take(6)
+            ->get();
+
+        $recentActivityLogs = ActivityLog::with('user')->latest()->take(5)->get();
+        $recentUsers = User::latest()->take(5)->get();
 
         return view('admin.dashboard', compact(
             'totalUsers',
@@ -406,7 +618,19 @@ class RepositoryController extends Controller
             'totalLibrarians',
             'totalAdmins',
             'totalDocuments',
-            'users'
+            'approvedCount',
+            'pendingSupervisorCount',
+            'pendingLibraryCount',
+            'revisionCount',
+            'rejectedCount',
+            'totalDownloads',
+            'totalBackups',
+            'departmentStats',
+            'typeStats',
+            'activityStats',
+            'monthlyUploads',
+            'recentActivityLogs',
+            'recentUsers'
         ));
     }
 
@@ -583,13 +807,13 @@ class RepositoryController extends Controller
         return redirect()->back()->with('error', 'Samahani, haikuwezekana kurudisha document hii.');
     }
 
-    // 5. Kufuta Kabisa (Force Delete) - Inaruhusu Admin au Supervisor kufuta kabisa logi na faili lake.
+    // 5. Kufuta Kabisa (Force Delete) - Inaruhusu Admin pekee kufuta kabisa logi na faili lake.
     public function destroyFromLog($id)
     {
         $user = Auth::user();
 
-        // Ruhusu Admin au Supervisor kufuta kabisa kwenye backups bila 403
-        if (!in_array($user->role, ['admin', 'supervisor'])) {
+        // Ruhusu Admin pekee kufuta kabisa kwenye backups
+        if ($user->role !== 'admin') {
             abort(403, 'Hauna ruhusa ya kufikia eneo hili.');
         }
 

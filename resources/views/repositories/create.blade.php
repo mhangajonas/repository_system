@@ -43,10 +43,10 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block font-medium text-sm text-gray-700">Document Type</label>
-                            <select name="document_type" class="w-full border-gray-300 rounded-md shadow-sm">
+                            <label class="block font-medium text-sm text-gray-700">Document Type *</label>
+                            <select name="document_type" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
                                 <option value="Thesis">Thesis</option>
                                 <option value="Dissertation">Dissertation</option>
                                 <option value="Research Paper">Research Paper</option>
@@ -54,8 +54,16 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block font-medium text-sm text-gray-700">Keywords (Comma separated)</label>
-                            <input type="text" name="keywords" placeholder="e.g. AI, Laravel, Database" required class="w-full border-gray-300 rounded-md shadow-sm">
+                            <label class="block font-medium text-sm text-gray-700">Access Level (Kiwango cha Ufikiaji) *</label>
+                            <select name="access_level" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                <option value="Open-Access" {{ cache('default_access_level') === 'Open-Access' ? 'selected' : '' }}>🟢 Open Access (Public)</option>
+                                <option value="Institution-Only" {{ cache('default_access_level') === 'Institution-Only' ? 'selected' : '' }}>🟡 Institution-Only (Wanachuo)</option>
+                                <option value="Restricted" {{ cache('default_access_level') === 'Restricted' ? 'selected' : '' }}>🔴 Restricted (Idhini Maalum)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-sm text-gray-700">Keywords (Comma separated) *</label>
+                            <input type="text" name="keywords" placeholder="e.g. AI, Laravel, Database" required class="w-full border-gray-300 rounded-md shadow-sm text-sm">
                         </div>
                     </div>
 

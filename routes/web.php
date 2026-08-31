@@ -24,6 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // INSTITUTIONAL REPOSITORY / PUBLISHED WORKS (Accessible to all authenticated users: Students, Supervisors, Librarians, Admins)
+    Route::get('/institutional-repository', [RepositoryController::class, 'publishedWorks'])->name('repositories.published');
+
     // 1. STUDENT ROUTES
     Route::get('/repositories/create', [RepositoryController::class, 'create'])->name('repositories.create');
     Route::post('/repositories', [RepositoryController::class, 'store'])->name('repositories.store');
@@ -54,6 +57,9 @@ Route::middleware('auth')->group(function () {
 
         // Analytical Dashboard & Reports
         Route::get('/library/reports', [RepositoryController::class, 'analytics'])->name('library.reports');
+
+        // Download Logs (Librarian & Admin)
+        Route::get('/download-logs', [RepositoryController::class, 'downloadLogs'])->name('download.logs');
 
         // Alias ya muda kuzuia error ya library.users endapo view yoyote inaiita
         Route::get('/library/users', [RepositoryController::class, 'adminDashboard'])->name('library.users');

@@ -13,6 +13,51 @@
                 </div>
             @endif
 
+            <!-- Quick Analytics Overview Banner for Librarian -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-yellow-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Pending Cataloging</p>
+                        <p class="text-2xl font-extrabold text-yellow-600 mt-1">{{ $pendingCount ?? $pendingDocuments->count() }}</p>
+                    </div>
+                    <span class="text-2xl">⏳</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-green-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Approved in Repository</p>
+                        <p class="text-2xl font-extrabold text-green-600 mt-1">{{ $approvedCount ?? 0 }}</p>
+                    </div>
+                    <span class="text-2xl">✅</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-purple-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Institutional Repository</p>
+                        <a href="{{ route('repositories.published') }}" class="inline-flex items-center gap-1 text-xs font-bold text-purple-600 hover:text-purple-800 mt-2">
+                            🏛️ Kazi Zilizochapishwa →
+                        </a>
+                    </div>
+                    <span class="text-2xl">📚</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-indigo-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Graphic Analytics</p>
+                        <a href="{{ route('library.reports') }}" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 mt-2">
+                            📊 Ripoti na Takwimu →
+                        </a>
+                    </div>
+                    <span class="text-2xl">📈</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-teal-500 flex items-center justify-between lg:col-span-1 sm:col-span-2">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Download Logs</p>
+                        <a href="{{ route('download.logs') }}" class="inline-flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-800 mt-2">
+                            📥 Historia ya Upakuaji →
+                        </a>
+                    </div>
+                    <span class="text-2xl">📋</span>
+                </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">Documents Approved by Supervisor (Pending Cataloging)</h3>
 

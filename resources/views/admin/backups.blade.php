@@ -35,7 +35,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kitendo (Action)</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Maelezo</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarehe</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Kitendo (Restore)</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Vitendo (Actions)</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200 text-sm">
@@ -49,20 +49,54 @@
                                         <span class="px-2.5 py-1 text-xs rounded-full font-bold 
                                             @if($log->action === 'DELETE_DOCUMENT' || $log->action === 'DELETE_USER') bg-red-100 text-red-800 
                                             @elseif($log->action === 'SUPERVISOR_ACTION') bg-blue-100 text-blue-800 
-                                            @else bg-gray-100 text-gray-850 @endif">
+                                            @elseif($log->action === 'RESTORE_ACTION') bg-green-100 text-green-800 
+                                            @else bg-gray-100 text-gray-800 @endif">
                                             {{ $log->action }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-gray-600 max-w-xs">{{ $log->description }}</td>
                                     <td class="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{{ $log->created_at->format('d M Y, H:i') }}</td>
-                                    <td class="px-6 py-4 text-center whitespace-nowrap">
-                                        <!-- Kitufe cha Kurudisha (Restore Button) -->
-                                        <form action="{{ route('admin.backups.restore', $log->id) }}" method="POST" onsubmit="return confirm('Una uhakika unataka kurudisha hali hii kutoka kwenye logi hii?');" class="inline">
-                                            @csrf
-                                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold shadow transition">
-                                                🔄 Rudisha
-                                            </button>
-                                        </form>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        @php
+                                            // Chomoa ID ya document kutoka kwenye maelezo ya logi
+                                            preg_match('/\(ID: (\d+)\)/', $log->description, $matches);
+                                            $docId = $matches[1] ?? null;
+                                        @endphp
+
+                                        <div class="flex items-center justify-center space-x-2">
+                                            {{-- 1. Kitufe cha Kurudisha (Restore) kwa document iliyofutwa --}}
+                                            @if($log->action === 'DELETE_DOCUMENT')
+                                                <form action="{{ route('admin.backups.restore', $log->id) }}" method="POST" onsubmit="return confirm('Una uhakika unataka kurudisha kazi hii kwenye mfumo?');" class="inline">
+                                                    @csrf
+                                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded text-xs font-semibold shadow">
+                                                        🔄 Rudisha
+                                                    </button>
+                                                </form>
+                                            @endif
+
+                                            {{-- 2. Kitufe cha Kudownload Kazi Iliyofutwa --}}
+                                            @if($log->action === 'DELETE_DOCUMENT' && $docId)
+                                                <a href="{{ route('repositories.download', $docId) }}" class="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded text-xs font-semibold shadow">
+                                                    ⬇️ Pakua
+                                                </a>
+                                            @endif
+
+                                            {{-- 3. Kitufe cha Onyesha Metadata --}}
+                                            @if($log->action === 'DELETE_DOCUMENT' && $docId)
+                                                <a href="{{ route('repositories.show', $docId) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-semibold shadow">
+                                                    👁️ Onyesha
+                                                </a>
+                                            @endif
+
+                                            {{-- 4. Kitufe cha Futa Kabisa (Force Delete) --}}
+                                            <form action="{{ route('admin.backups.destroy', $log->id) }}" method="POST" onsubmit="return confirm('Una uhakika unataka kufuta kabisa kumbukumbu hii na faili lake?');" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded text-xs font-semibold shadow">
+                                                    🗑️ Futa
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

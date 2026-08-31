@@ -41,7 +41,7 @@
                                             <span class="text-xs text-gray-500">Dept: {{ $doc->department }} | Prog: {{ $doc->degree_programme }}</span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="text-blue-600 hover:underline font-semibold">
+                                            <a href="{{ route('repositories.download', $doc->id) }}" class="text-blue-600 hover:underline font-semibold">
                                                 📄 View PDF
                                             </a>
                                         </td>

@@ -35,25 +35,29 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:student,supervisor,librarian'],
+            'role' => ['nullable', 'string', 'in:student,supervisor,librarian'],
             'department' => ['nullable', 'string', 'max:255'],
             'reg_number' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
             'staff_id' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
         ]);
+
+        $role = $request->role ?? 'student';
 
         // Hifadhi data mpya kwenye database kulingana na kama ni mwanafunzi au mfanyakazi
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'role' => $role,
             'department' => $request->department,
-            'reg_number' => $request->role === 'student' ? $request->reg_number : null,
-            'staff_id' => $request->role !== 'student' ? $request->staff_id : null,
+            'reg_number' => $role === 'student' ? $request->reg_number : null,
+            'staff_id' => $role !== 'student' ? $request->staff_id : null,
         ]);
 
         event(new Registered($user));
 
-        return redirect()->route('login')->with('status', 'Akaunti yako imetengenezwa kikamilifu! Tafadhali ingia (login).');
+        Auth::login($user);
+
+        return redirect()->route('dashboard')->with('success', 'Akaunti yako imetengenezwa kikamilifu!');
     }
 }

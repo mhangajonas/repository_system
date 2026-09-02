@@ -190,6 +190,48 @@
 
             </div>
 
+            <!-- EXTRA ANALYTICS: DOWNLOADS BY ROLE & APPROVAL EFFICIENCY -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                            ⬇️ Downloads by User Role
+                        </h3>
+                        <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2.5 py-1 rounded">Usage Pattern</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">Which user groups are downloading the most institutional content</p>
+                    <div class="relative h-72">
+                        <canvas id="adminDownloadRoleChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                            📊 Approval Efficiency
+                        </h3>
+                        <span class="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded">Workflow KPI</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">Share of all submitted documents that have been approved</p>
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+                            <div class="text-xs font-bold uppercase tracking-wide text-green-700">Approval Rate</div>
+                            <div class="mt-2 text-4xl font-extrabold text-green-700">{{ $approvalRate }}%</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <div class="text-gray-500 text-[11px] uppercase font-bold">Approved</div>
+                                <div class="text-xl font-bold text-gray-800">{{ $approvedCount }}</div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <div class="text-gray-500 text-[11px] uppercase font-bold">Total</div>
+                                <div class="text-xl font-bold text-gray-800">{{ $totalDocuments }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- LIVE ACTIVITY FEED & RECENT USERS -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
@@ -436,6 +478,34 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // 6. Download by Role Chart
+            const roleDownloadCtx = document.getElementById('adminDownloadRoleChart').getContext('2d');
+            const roleDownloadLabels = {!! json_encode($downloadByRoleStats->pluck('role')) !!};
+            const roleDownloadValues = {!! json_encode($downloadByRoleStats->pluck('total')) !!};
+            new Chart(roleDownloadCtx, {
+                type: 'bar',
+                data: {
+                    labels: roleDownloadLabels.length ? roleDownloadLabels.map(role => role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Unknown') : ['No Data'],
+                    datasets: [{
+                        label: 'Downloads',
+                        data: roleDownloadValues.length ? roleDownloadValues : [0],
+                        backgroundColor: ['#8B5CF6', '#10B981', '#F59E0B', '#3B82F6', '#EF4444'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { font: { size: 10 } } }
                     },
                     plugins: {
                         legend: { display: false }

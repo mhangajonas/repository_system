@@ -511,6 +511,13 @@ class RepositoryController extends Controller
         $revisionCount = Repository::where('status', 'revision_requested')->count();
         $rejectedCount = Repository::where('status', 'rejected')->count();
         $totalDownloads = DownloadLog::count();
+        $totalBackups = ActivityLog::count();
+        $approvalRate = $totalDocuments > 0 ? round(($approvedCount / $totalDocuments) * 100, 1) : 0;
+
+        $downloadByRoleStats = DownloadLog::selectRaw('downloaded_by_role as role, count(*) as total')
+            ->groupBy('downloaded_by_role')
+            ->orderByDesc('total')
+            ->get();
 
         $departmentStats = Repository::selectRaw('department, count(*) as total')
             ->groupBy('department')
@@ -585,6 +592,12 @@ class RepositoryController extends Controller
         $rejectedCount = Repository::where('status', 'rejected')->count();
         $totalDownloads = DownloadLog::count();
         $totalBackups = ActivityLog::count();
+        $approvalRate = $totalDocuments > 0 ? round(($approvedCount / $totalDocuments) * 100, 1) : 0;
+
+        $downloadByRoleStats = DownloadLog::selectRaw('downloaded_by_role as role, count(*) as total')
+            ->groupBy('downloaded_by_role')
+            ->orderByDesc('total')
+            ->get();
 
         $departmentStats = Repository::selectRaw('department, count(*) as total')
             ->groupBy('department')
@@ -625,6 +638,8 @@ class RepositoryController extends Controller
             'rejectedCount',
             'totalDownloads',
             'totalBackups',
+            'approvalRate',
+            'downloadByRoleStats',
             'departmentStats',
             'typeStats',
             'activityStats',
